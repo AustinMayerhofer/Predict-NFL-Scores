@@ -4,7 +4,7 @@ from sys import exit
 
 NUM_COLUMNS = 15
 
-# reads NFL table from teamrankings.com into pandas dataframe
+# function that reads NFL table from teamrankings.com into pandas dataframe
 def df(tag, link):
     data = pd.read_html(link)
     data = data[0].dropna() # format single list into dataframe with columns
@@ -28,6 +28,7 @@ if len(scores_df.columns) != NUM_COLUMNS:
 # Preprocessing
 scores_df = scores_df.drop(['Boxscore', 'YdsW', 'TOW', 'YdsL', 'TOL'], axis=1) # drop unused information
 
+# Home/Away preprocessing
 scores_df.loc[scores_df['Location'] == '@', 'HomeTeam'] = scores_df['Loser/tie']
 scores_df.loc[scores_df['Location'] == '@', 'AwayTeam'] = scores_df['Winner/tie']
 scores_df.loc[scores_df['Location'].isnull(), 'HomeTeam'] = scores_df['Winner/tie']
@@ -36,8 +37,16 @@ scores_df.loc[scores_df['Location'] == '@', 'PtsHome'] = scores_df['PtsL']
 scores_df.loc[scores_df['Location'] == '@', 'PtsAway'] = scores_df['PtsW']
 scores_df.loc[scores_df['Location'].isnull(), 'PtsHome'] = scores_df['PtsW']
 scores_df.loc[scores_df['Location'].isnull(), 'PtsAway'] = scores_df['PtsL']
-
 scores_df = scores_df.drop(['Winner/tie', 'Location', 'Loser/tie', 'PtsW', 'PtsL'], axis=1)
+
+# Date preprocessing
+scores_df[['Month', 'MonthDay']] = scores_df['Date'].str.split(expand=True) # split <month> <day> into 2 columns
+months = {'January':1, 'February':2, 'March':3, 'April':4, 'May':5, 'June':6, 'July':7, 'August':8,
+    'September':9, 'October':10, 'November':11, 'December':12} # dictionary to convert string to number
+scores_df['Month'] = scores_df['Month'].map(months) # convert months to numbers
+scores_df['DateCode'] = scores_df['Year'].astype(str) + '-' + scores_df['Month'].astype(str) + '-' + scores_df['MonthDay'].astype(str)
+scores_df = scores_df.drop(['Date', 'Month', 'MonthDay'], axis=1)
+
 
 
 print(scores_df)
